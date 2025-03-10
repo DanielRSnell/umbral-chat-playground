@@ -7,5 +7,167 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout>
-	<Welcome />
+	<h1>Test Form First Extension</h1>
+    <p>
+      This page demonstrates loading the FormFirstExtension as a standalone
+      script.
+    </p>
+
+    <div id="chat-container">
+      <div id="chat-target"></div>
+    </div>
+
+    <!-- Load the extension script -->
+    <script is:inline src="/extensions/form-first.js"></script>
+
+    <script is:inline>
+      // Check if the extension factory is available globally
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log(
+          "FormFirstExtension available globally:",
+          typeof FormFirstExtension !== "undefined"
+        );
+        console.log(
+          "createFormFirstExtension available globally:",
+          typeof createFormFirstExtension !== "undefined"
+        );
+
+        if (typeof createFormFirstExtension !== "undefined") {
+          // Create a custom configuration
+          const customConfig = {
+            branding: {
+              logo: {
+                icon: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z",
+                url: "/assets/logo.png",
+                alt: "Custom Chat"
+              },
+              poweredBy: {
+                text: "POWERED BY",
+                logo: {
+                  text: "My Company",
+                  icon: "/assets/powered-by.png"
+                }
+              }
+            },
+            header: {
+              title: "Hello there! 👋",
+              subtitle: "Welcome to our custom chat!"
+            },
+            steps: [
+              {
+                id: "zipcode",
+                placeholder: "Enter your zip code",
+                validation: (value) => value.length >= 5
+              },
+              {
+                id: "email",
+                placeholder: "Your email address?",
+                validation: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+              }
+            ],
+            questions: [
+              {
+                id: "custom1",
+                title: "Custom question 1",
+                icon: "chevron-right"
+              },
+              {
+                id: "custom2", 
+                title: "Custom question 2",
+                icon: "chevron-right"
+              }
+            ],
+            footer: {
+              navigation: [
+                {
+                  id: "home",
+                  label: "Home",
+                  icon: "home"
+                },
+                {
+                  id: "chat",
+                  label: "Chat",
+                  icon: "chat"
+                }
+              ]
+            },
+            icons: {
+              "chevron-right": "M9 5l7 7-7 7",
+              "home": "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+              "chat": "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            }
+          };
+
+          // Create a custom extension with our config
+          const customExtension = createFormFirstExtension(customConfig);
+          
+          console.log("Default FormFirstExtension:", FormFirstExtension);
+          console.log("Custom extension:", customExtension);
+
+          // Mock the window.umbral.chat object for testing
+          window.umbral = window.umbral || {};
+          window.umbral.chat = window.umbral.chat || {
+            load: (config) => {
+              console.log("Loading chat with config:", config);
+            },
+            interact: (data) => {
+              console.log("Interacting with chat:", data);
+            },
+          };
+
+          // Simulate loading the extension
+          const targetElement = document.getElementById("chat-target");
+          if (targetElement) {
+            targetElement.innerHTML = "<p>Extension loaded successfully!</p>";
+
+            // Create a mock trace object to test the extension
+            const mockTrace = {
+              type: "form_gate",
+              payload: {
+                name: "form_gate",
+              },
+            };
+
+            // Test if the custom extension's match function works
+            const isMatch = customExtension.match({ trace: mockTrace });
+            console.log("Custom extension match result:", isMatch);
+
+            if (isMatch) {
+              // Test the render function with the custom extension
+              customExtension.render({
+                trace: mockTrace,
+                element: targetElement,
+              });
+            }
+          }
+        } else {
+          console.error("Extension factory not available globally!");
+          document.getElementById("chat-target").innerHTML =
+            "<p>Error: Extension factory not loaded properly!</p>";
+        }
+      });
+    </script>
+    <script is:inline>
+      (function (d, t) {
+        var v = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+        v.onload = function () {
+          window.voiceflow.chat.load({
+            verify: { projectID: "67a51be339c6187b15396b7d" },
+            url: "https://general-runtime.voiceflow.com",
+            versionID: "production",
+            assistant: {
+              extensions: [window.FormFirstExtension],
+              stylesheet: "/umbral-extensions.css",
+            },
+            voice: {
+              url: "https://runtime-api.voiceflow.com",
+            },
+          });
+        };
+        v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
+        v.type = "text/javascript";
+        s.parentNode.insertBefore(v, s);
+      })(document, "script");
+    </script>
 </Layout>
